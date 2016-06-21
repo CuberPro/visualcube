@@ -62,7 +62,8 @@
 		$ENABLE_COOKIES,
 		$ENABLE_CACHE,
 		$CACHE_IMG_SIZE_LIMIT,
-		$DEFAULTS;
+		$DEFAULTS,
+		$MYSQLI_CON;
 
 
 	// VisualCube version
@@ -87,8 +88,8 @@
 		// Check cache for image and return if it exists in cache
 		if($ENABLE_CACHE){
 			// Connect to db
-			$con = mysql_connect($DB_HOST, $DB_USERNAME, $DB_PASSWORD) or die("Connect Error: " . mysql_error());
-			@mysql_select_db($DB_NAME, $con) or die("Select DB Error: ".mysql_error());
+			$MYSQLI_CON = mysqli_connect($DB_HOST, $DB_USERNAME, $DB_PASSWORD) or die("Connect Error: " . mysqli_error($MYSQLI_CON));
+			@mysqli_select_db($MYSQLI_CON, $DB_NAME) or die("Select DB Error: ".mysqli_error($MYSQLI_CON));
 
 			$hash = md5($_SERVER['QUERY_STRING']);
 			$imgdata = get_arrays("SELECT fmt, req, rcount, img FROM vcache WHERE hash='$hash'");
@@ -96,9 +97,9 @@
 			if($imgdata && count($imgdata) > 0 && $imgdata[0]['req'] == $_SERVER['QUERY_STRING']){
 				display_img($imgdata[0]['img'], $imgdata[0]['fmt']);
 				// Increment access count
-				mysql_query("UPDATE vcache SET rcount=".($imgdata[0]['rcount'] + 1)." WHERE hash='$hash'");
+				mysqli_query($MYSQLI_CON, "UPDATE vcache SET rcount=".($imgdata[0]['rcount'] + 1)." WHERE hash='$hash'");
 				// Disconnect from db
-				mysql_close();
+				mysqli_close($MYSQLI_CON);
 				return;
 			}
 		}
@@ -628,14 +629,14 @@
 
 			// Cache image if enabled
 			if($ENABLE_CACHE && !array_key_exists("nocache", $_REQUEST) && strlen($img) < $CACHE_IMG_SIZE_LIMIT){
-				$req = mysql_real_escape_string($_SERVER['QUERY_STRING']);
-				$rfr = mysql_real_escape_string($_SERVER['HTTP_REFERER']);
+				$req = mysqli_real_escape_string($MYSQLI_CON, $_SERVER['QUERY_STRING']);
+				$rfr = mysqli_real_escape_string($MYSQLI_CON, isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '');
 				$hash = md5($req);
-				$img = mysql_real_escape_string($img);
-				mysql_query("INSERT INTO vcache(hash, fmt, req, rfr, rcount, img) ".
+				$img = mysqli_real_escape_string($MYSQLI_CON, $img);
+				mysqli_query($MYSQLI_CON, "INSERT INTO vcache(hash, fmt, req, rfr, rcount, img) ".
 						"VALUES ('$hash', '$fmt', '$req', '$rfr', 1, '$img')");
 				// Disconnect from db
-				mysql_close();
+				mysqli_close($MYSQLI_CON);
 			}
 		}
 	}
@@ -954,12 +955,13 @@
 
 	// Return result of sql query as array
 	function get_arrays($query){
-		$result = mysql_query($query);
-		$count = mysql_numrows($result);
+		global $MYSQLI_CON;
+		$result = mysqli_query($MYSQLI_CON, $query);
+		$count = mysqli_num_rows($result);
 		if($count <= 0) return null;
 		$ary = Array($count);
 		$i = 0;
-		while($record = mysql_fetch_array($result, MYSQL_ASSOC)){
+		while($record = mysqli_fetch_array($result, MYSQLI_ASSOC)){
 			$ary[$i] = $record;
 			$i++;
 		}
