@@ -51,7 +51,7 @@
 */
 
 	// Import configuration values
-	require 'visualcube_config.php';
+	require (is_file('visualcube_config.local.php') ? 'visualcube_config.local.php' : 'visualcube_config.php');
 
 	global
 		$DB_HOST,

@@ -2,4 +2,4 @@
 .dropbox
 nbproject
 local
-
+*.local.php

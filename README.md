@@ -14,7 +14,7 @@ http://cube.crider.co.uk/visualcube.php
 ##### Steps
 
 1. Download and extract the code into a web-accessible folder.
-2. Edit the configuration variables in visualcube_config.php
+2. Edit the configuration variables in visualcube_config.php or copy it to visualcube_config.local.php and edit the configurations.
 3. Point your browser to: www.yourwebsite.com/visualcube.php
 4. (Optional) Edit DB_USER, DB_PASS and DB_NAME in visualcube_dbprune.sh and install the cron job.
 
